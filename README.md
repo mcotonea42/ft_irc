@@ -1,105 +1,105 @@
 # ft_irc
 
 ![Language](https://img.shields.io/badge/Language-C%2B%2B98-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
-![School](https://img.shields.io/badge/School-42-000000?style=for-the-badge&)
+![School](https://img.shields.io/badge/School-42-000000?style=for-the-badge&logo=42&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 ![Network](https://img.shields.io/badge/Network-TCP%2FIP-green?style=for-the-badge)
 ![RFC](https://img.shields.io/badge/Standard-RFC%201459-orange?style=for-the-badge)
 
 ## 📝 Description
 
-**ft_irc** est un serveur IRC complet implémenté en C++98, respectant le standard RFC 1459.
-Ce projet marque une rupture avec la programmation impérative classique pour adopter une **Architecture Orientée Objet** forte. Il met l'accent sur la maintenabilité, la gestion d'erreurs et la performance via des I/O non bloquants (`poll()`).
+**ft_irc** is a complete IRC server implemented in C++98, complying with the RFC 1459 standard.
+This project marks a shift from classical imperative programming to a strong **Object-Oriented Architecture**. It focuses on maintainability, error handling, and performance via non-blocking I/O (`poll()`).
 
-## 🏗️ Architecture Logicielle
+## 🏗️ Software Architecture
 
-Pour éviter une structure monolithique complexe (le fameux "if/else forest"), j'ai structuré le projet autour de Design Patterns éprouvés.
+To avoid a complex monolithic structure (the famous "if/else forest"), I structured the project around proven Design Patterns.
 
-Le code est organisé pour maximiser la clarté et la maintenabilité :
+The code is organized to maximize clarity and maintainability:
 
-- Chaque commande IRC (ex. `NICK`, `JOIN`, `PRIVMSG`, `KICK`, ...) implémente l'interface `ICommand` (fichier `includes/ICommand.hpp`).
-- Le serveur (classe `Server`) conserve une table associative (map) liant le nom d'une commande à l'objet qui l'implémente. Cela évite des chaînes de `if/else` et permet d'ajouter facilement de nouvelles commandes.
-- Un `Logger` (fichier `includes/Logger.hpp`) fournit des niveaux de log (`DEBUG`, `INFO`, `CMD`, `ERROR`) et écrit les messages d'erreur sur `stderr` alors que les autres niveaux vont sur `stdout`.
+- Each IRC command (e.g., `NICK`, `JOIN`, `PRIVMSG`, `KICK`...) implements the `ICommand` interface (file `includes/ICommand.hpp`).
+- The server (`Server` class) maintains an associative map linking a command name to the object implementing it. This avoids long `if/else` chains and makes adding new commands easy.
+- A `Logger` (file `includes/Logger.hpp`) provides log levels (`DEBUG`, `INFO`, `CMD`, `ERROR`) and writes error messages to `stderr` while other levels go to `stdout`.
 
-## Pourquoi une map de commandes ?
+## Why use a Command Map?
 
-Avantages :
+Advantages:
 
-- Recherche O(log N) pour le conteneur `std::map`
-- Enregistrement centralisé des commandes (facile à initialiser dans le constructeur de `Server`).
-- Extensibilité : ajouter une commande revient à créer une classe dérivée et l'enregistrer dans la map.
+- **O(log N)** lookup time for the `std::map` container.
+- **Centralized command registration** (easy to initialize in the `Server` constructor).
+- **Extensibility:** Adding a command simply means creating a derived class and registering it in the map.
 
-## Interface `ICommand` — Exemple
+## `ICommand` Interface — Example
 
-Voici un exemple minimal de ce à quoi ressemble l'interface `ICommand` (inspiré de `includes/ICommand.hpp`) :
+Here is a minimal example of what the `ICommand` interface looks like (inspired by `includes/ICommand.hpp`):
 
 ```cpp
 class ICommand {
 public:
     virtual ~ICommand() {}
-    // execute agit sur le serveur, le client appelant et les arguments de la commande
+    // execute acts on the server, the calling client, and the command arguments
     virtual void execute(Server& server, Client& client, const std::vector<std::string>& args) = 0;
 };
 ```
 
 Chaque commande implémente `execute` et utilise uniquement l'API publique du `Server` et du `Client` pour effectuer son travail.
 
-## Enregistrer les commandes — Exemple (dans `Server`)
+## Registering Commands — Example (in `Server`)
 
-Dans le constructeur (ou une méthode d'initialisation) du serveur, les commandes sont instanciées et placées dans la map :
+In the server's constructor (or an initialization method), commands are instantiated and placed into the map:
 
 ```cpp
-// pseudo-extrait du constructeur Server::Server(...)
+// pseudo-snippet from Server::Server(...) constructor
 _commands["NICK"] = new NickCommand();
 _commands["JOIN"] = new JoinCommand();
 _commands["PRIVMSG"] = new PrivmsgCommand();
 _commands["QUIT"] = new QuitCommand();
-// ... autres commandes
+// ... other commands
 ```
 
-## Logger — Fonctionnement et bonne pratique
+## Logger — Operation and Best Practices
 
-Le logger du projet (fichier `includes/Logger.hpp`) définit des niveaux : `DEBUG`, `INFO`, `CMD`, `ERROR`.
+The project logger (file includes/Logger.hpp) defines levels: DEBUG, INFO, CMD, ERROR.
 
-- Les messages de niveau `ERROR` sont écrits sur `std::cerr` et contiennent un préfixe `[ERROR]`.
-- Les autres niveaux sont écrits sur `std::cout` avec des préfixes appropriés (`[INFO]`, `[DEBUG]`, `[CMD]`).
+- Messages with the ERROR level are written to std::cerr and include an [ERROR] prefix.
+- Other levels are written to std::cout with appropriate prefixes ([INFO], [DEBUG], [CMD]).
 
-Exemples d'utilisation :
+Usage examples:
 
 ```cpp
-Logger::log(INFO, "Serveur démarré sur le port 6667");
-Logger::log(CMD, "Exécution de JOIN par user 'alice'");
-Logger::log(ERROR, "Impossible d'écouter sur le socket : address already in use");
+Logger::log(INFO, "Server started on port 6667");
+Logger::log(CMD, "Execution of JOIN by user 'alice'");
+Logger::log(ERROR, "Failed to listen on socket: address already in use");
 ```
 
 ## Build & Exécution
 
-1. Compiler :
+1. Compile :
 
 ```bash
 make
 ```
 
-2. Lancer le binaire produit (nom selon `Makefile`) :
+2. Run the binary :
 
 ```bash
 ./ircserv <port> <password>
 ```
 
 
-3. Se connecter via irssi :
+3. Connect via irssi :
 
 ```bash
 irssi <IP_address> <port> <password>
 ```
 
-4. Se connecter via netcat :
+4. Connect via netcat :
 
 ```bash
 nc -C <IP_address> <port>
 ```
 
-Il faudra alors taper manuellement les commandes IRC, par exemple :
+You will then need to manually type the IRC commands, for example:
 
 ```
 PASS <password>
@@ -108,9 +108,9 @@ USER testuser 0 * :Test User
 JOIN #test
 PRIVMSG #test :Hello world!
 ```
-## 👥 Auteurs
+## 👥 Authors
 
-Ce projet a été réalisé en binôme par :
+This project was built by a duo:
 
 * **COTONEA Melvin** - [Voir le profil GitHub](https://github.com/mcotonea42)
 * **MILLIOT Marc** - [Voir le profil GitHub](https://github.com/NaYruk)
